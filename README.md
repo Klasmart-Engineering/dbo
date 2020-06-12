@@ -10,4 +10,4 @@ go get -u gitlab.badanamu.com.cn/calmisland/dbo
 
 # 使用
 
-详见 [示例](https://gitlab.badanamu.com.cn/kidsloop-backend/dbo/-/blob/master/cmd/main.go)
+详见 [示例](cmd/main.go)

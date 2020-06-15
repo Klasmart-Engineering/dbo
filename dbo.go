@@ -9,7 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"gitlab.badanamu.com.cn/calmisland/common-cn/logger"
-	"gitlab.badanamu.com.cn/calmisland/krypton/shareconfig"
+	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 )
 
 const (
@@ -64,17 +64,21 @@ type Config struct {
 }
 
 func getDefaultConfig() (*Config, error) {
-	shareConfig, err := shareconfig.LoadMySQLConfig(defaultDatabase)
+	err:=krconfig.Init()
 	if err != nil {
-		return nil, err
+		return nil,err
 	}
-
+	//shareConfig, err := shareconfig.LoadMySQLConfig(defaultDatabase)
+	//if err != nil {
+	//	return nil, err
+	//}
+	cfg:=krconfig.CommonShareConfig()
 	return &Config{
-		ConnectionString: shareConfig.ConnectionString,
-		MaxOpenConns:     shareConfig.Params.MaxOpenConns,
-		MaxIdleConns:     shareConfig.Params.MaxIdleConns,
-		ShowLog:          shareConfig.Params.ShowLog,
-		ShowSQL:          shareConfig.Params.ShowSQL,
+		ConnectionString: cfg.Db.Mysql.ConnStr,
+		MaxOpenConns:     cfg.Db.Mysql.Params.DbMaxOpenConn,
+		MaxIdleConns:     cfg.Db.Mysql.Params.DbMaxIdleConn,
+		ShowLog:          cfg.Db.Mysql.Params.DbShowLog,
+		ShowSQL:          cfg.Db.Mysql.Params.Debug,
 	}, nil
 }
 

@@ -33,25 +33,27 @@ func MustGetDB(ctx context.Context) *DBContext {
 
 // GetDB get db context
 func GetDB(ctx context.Context) (*DBContext, error) {
-	if globalDBO != nil {
-		return globalDBO.GetDB(ctx), nil
-	}
-
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 
-	if globalDBO != nil {
-		return globalDBO.GetDB(ctx), nil
-	}
+	if globalDBO == nil {
+		dbo, err := New()
+		if err != nil {
+			return nil, err
+		}
 
-	dbo, err := New()
-	if err != nil {
-		return nil, err
+		globalDBO = dbo
 	}
-
-	globalDBO = dbo
 
 	return globalDBO.GetDB(ctx), nil
+}
+
+// ReplaceGlobal replace global dbo instance
+func ReplaceGlobal(dbo *DBO) {
+	globalMutex.Lock()
+	defer globalMutex.Unlock()
+
+	globalDBO = dbo
 }
 
 // Config dbo config
@@ -68,10 +70,7 @@ func getDefaultConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	//shareConfig, err := shareconfig.LoadMySQLConfig(defaultDatabase)
-	//if err != nil {
-	//	return nil, err
-	//}
+
 	cfg := krconfig.CommonShareConfig()
 	return &Config{
 		ConnectionString: cfg.Db.Mysql.ConnStr,

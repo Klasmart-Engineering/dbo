@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"runtime/debug"
 	"time"
 
 	log "gitlab.badanamu.com.cn/calmisland/common-cn/logger"
@@ -33,8 +32,8 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {
-				log.WithField("recover error", err1).
-					WithField("stack", string(debug.Stack())).
+				log.WithStacks().
+					WithField("recover error", err1).
 					WithContext(ctxWithTimeout).
 					Error("with transaction panic")
 				funcDone <- fmt.Errorf("transaction panic: %+v", err1)
@@ -53,7 +52,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 		err = ctxWithTimeout.Err()
 		log.WithContext(ctxWithTimeout).
 			WithError(err).
-			WithField("stack", string(debug.Stack())).
+			WithStacks().
 			Error("transaction context deadline exceeded")
 	}
 
@@ -62,6 +61,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 		if err1 != nil {
 			log.WithContext(ctxWithTimeout).
 				WithError(err1).
+				WithStacks().
 				WithField("outer error", err.Error()).
 				Error("rollback transaction failed")
 		} else {
@@ -74,6 +74,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 	if err != nil {
 		log.WithContext(ctxWithTimeout).
 			WithError(err).
+			WithStacks().
 			Error("commit transaction failed")
 		return err
 	}
@@ -106,8 +107,8 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {
-				log.WithField("recover error", err1).
-					WithField("stack", string(debug.Stack())).
+				log.WithStacks().
+					WithField("recover error", err1).
 					WithContext(ctxWithTimeout).
 					Error("with transaction panic")
 				funcDone <- &transactionResult{Error: fmt.Errorf("transaction panic: %+v", err1)}
@@ -128,7 +129,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 		funcResult = &transactionResult{Error: ctxWithTimeout.Err()}
 		log.WithContext(ctxWithTimeout).
 			WithError(ctxWithTimeout.Err()).
-			WithField("stack", string(debug.Stack())).
+			WithStacks().
 			Error("transaction context deadline exceeded")
 	}
 
@@ -137,6 +138,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 		if err1 != nil {
 			log.WithContext(ctxWithTimeout).
 				WithError(err1).
+				WithStacks().
 				WithField("outer error", funcResult.Error.Error()).
 				Error("rollback transaction failed")
 		} else {
@@ -149,6 +151,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	if err != nil {
 		log.WithContext(ctxWithTimeout).
 			WithError(err).
+			WithStacks().
 			Error("commit transaction failed")
 		return nil, err
 	}

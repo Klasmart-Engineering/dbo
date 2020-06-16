@@ -64,15 +64,15 @@ type Config struct {
 }
 
 func getDefaultConfig() (*Config, error) {
-	err:=krconfig.Init()
+	err := krconfig.Init()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	//shareConfig, err := shareconfig.LoadMySQLConfig(defaultDatabase)
 	//if err != nil {
 	//	return nil, err
 	//}
-	cfg:=krconfig.CommonShareConfig()
+	cfg := krconfig.CommonShareConfig()
 	return &Config{
 		ConnectionString: cfg.Db.Mysql.ConnStr,
 		MaxOpenConns:     cfg.Db.Mysql.Params.DbMaxOpenConn,
@@ -102,6 +102,7 @@ func New(options ...Option) (*DBO, error) {
 	db, err := gorm.Open("mysql", config.ConnectionString)
 	if err != nil {
 		logger.WithError(err).
+			WithStacks().
 			WithField("conn", config.ConnectionString).
 			Error("init mysql connection failed")
 		return nil, err
@@ -110,6 +111,7 @@ func New(options ...Option) (*DBO, error) {
 	err = db.DB().Ping()
 	if err != nil {
 		logger.WithError(err).
+			WithStacks().
 			WithField("conn", config.ConnectionString).
 			Error("ping mysql datebase failed")
 		return nil, err

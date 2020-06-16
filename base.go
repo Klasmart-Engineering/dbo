@@ -29,6 +29,7 @@ func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) 
 		if ok && me.Number == 1062 {
 			log.WithError(err).
 				WithContext(ctx).
+				WithStacks().
 				WithField("tableName", db.NewScope(value).TableName()).
 				WithField("value", value).
 				WithField("duration", time.Now().Sub(start).String()).
@@ -38,6 +39,7 @@ func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) 
 
 		log.WithError(err).
 			WithContext(ctx).
+			WithStacks().
 			WithField("tableName", db.NewScope(value).TableName()).
 			WithField("value", value).
 			WithField("duration", time.Now().Sub(start).String()).
@@ -71,6 +73,7 @@ func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) 
 		if ok && me.Number == 1062 {
 			log.WithError(newDB.Error).
 				WithContext(ctx).
+				WithStacks().
 				WithField("tableName", db.NewScope(value).TableName()).
 				WithField("value", value).
 				WithField("duration", time.Now().Sub(start).String()).
@@ -80,6 +83,7 @@ func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) 
 
 		log.WithError(newDB.Error).
 			WithContext(ctx).
+			WithStacks().
 			WithField("tableName", db.NewScope(value).TableName()).
 			WithField("value", value).
 			WithField("duration", time.Now().Sub(start).String()).
@@ -111,6 +115,7 @@ func (s BaseDA) SaveTx(ctx context.Context, db *DBContext, value interface{}) er
 	if err != nil {
 		log.WithError(err).
 			WithContext(ctx).
+			WithStacks().
 			WithField("tableName", db.NewScope(value).TableName()).
 			WithField("value", value).
 			WithField("duration", time.Now().Sub(start).String()).
@@ -151,6 +156,7 @@ func (s BaseDA) GetTx(ctx context.Context, db *DBContext, id interface{}, value 
 
 	log.WithError(err).
 		WithContext(ctx).
+		WithStacks().
 		WithField("tableName", db.NewScope(value).TableName()).
 		WithField("id", id).
 		WithField("value", value).
@@ -197,6 +203,7 @@ func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions
 	if err != nil {
 		log.WithError(err).
 			WithContext(ctx).
+			WithStacks().
 			WithField("tableName", db.NewScope(values).TableName()).
 			WithField("condition", condition).
 			WithField("pager", pager).
@@ -239,6 +246,7 @@ func (s BaseDA) CountTx(ctx context.Context, db *DBContext, condition Conditions
 	if err != nil {
 		log.WithError(err).
 			WithContext(ctx).
+			WithStacks().
 			WithField("tableName", tableName).
 			WithField("condition", condition).
 			Error("count failed")

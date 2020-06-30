@@ -127,6 +127,42 @@ func New(options ...Option) (*DBO, error) {
 	return &DBO{db, config}, nil
 }
 
+// New create new database operator
+func NewWithConfig(options ...Option) (*DBO, error) {
+	config := new(Config)
+	for _, option := range options {
+		option(config)
+	}
+
+	db, err := gorm.Open("mysql", config.ConnectionString)
+	if err != nil {
+		logger.WithError(err).
+			WithStacks().
+			WithField("conn", config.ConnectionString).
+			Error("init mysql connection failed")
+		return nil, err
+	}
+
+	err = db.DB().Ping()
+	if err != nil {
+		logger.WithError(err).
+			WithStacks().
+			WithField("conn", config.ConnectionString).
+			Error("ping mysql datebase failed")
+		return nil, err
+	}
+
+	if config.MaxOpenConns > 0 {
+		db.DB().SetMaxOpenConns(config.MaxOpenConns)
+	}
+
+	if config.MaxIdleConns > 0 {
+		db.DB().SetMaxIdleConns(config.MaxIdleConns)
+	}
+
+	return &DBO{db, config}, nil
+}
+
 // Option dbo option
 type Option func(*Config)
 

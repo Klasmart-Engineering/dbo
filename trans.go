@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 	"time"
 
 	log "gitlab.badanamu.com.cn/calmisland/common-cn/logger"
@@ -14,11 +15,20 @@ const (
 	DBTransactionTimeout = time.Second * 3
 )
 
+func getDBTransactionTimeout() time.Duration {
+	second :=krconfig.CommonShareConfig().Db.Mysql.TransactionTimeoutSecond
+	if second >0 {
+		return time.Duration(int64(time.Second)*int64(second))
+	}
+	return DBTransactionTimeout
+}
+
 // GetTrans begin a transaction
 func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) error) error {
 	log.WithContext(ctx).Debug("begin transaction")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, DBTransactionTimeout)
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
 	defer cancel()
 
 	db, err := GetDB(ctxWithTimeout)
@@ -93,7 +103,7 @@ type transactionResult struct {
 func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBContext) (interface{}, error)) (interface{}, error) {
 	log.WithContext(ctx).Debug("begin transaction")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, DBTransactionTimeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
 	defer cancel()
 
 	db, err := GetDB(ctxWithTimeout)

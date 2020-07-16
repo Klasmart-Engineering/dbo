@@ -202,6 +202,7 @@ github.com/tidwall/gjson v1.6.0 h1:9VEQWz6LLMUsUl6PueE49ir4Ka6CzLymOAZDxpFsTDc=
 github.com/tidwall/gjson v1.6.0/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=
 github.com/tidwall/match v1.0.1 h1:PnKP62LPNxHKTwvHHZZzdOAOCtsJTjo6dZLCwpKm5xc=
 github.com/tidwall/match v1.0.1/go.mod h1:LujAq0jyVjBy028G1WhWfIzbpQfMO8bBZ6Tyb0+pL9E=
+github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 h1:j6JEOq5QWFker+d7mFQYOhjTZonQ7YkLTHm56dbn+yM=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
@@ -215,6 +216,8 @@ gitlab.badanamu.com.cn/calmisland/common-cn v0.14.0 h1:EESBRSe4zsv9+f+1rHODe6DXA
 gitlab.badanamu.com.cn/calmisland/common-cn v0.14.0/go.mod h1:1tH7r2tNYKG1dXamFx8VPF7qwoLcStAD5BrHtG2eW7k=
 gitlab.badanamu.com.cn/calmisland/krypton v1.2.14 h1:Qhy3JUoClx1il3ZioBt/fuH5MTO2HEECMqRNwpxU6O8=
 gitlab.badanamu.com.cn/calmisland/krypton v1.2.14/go.mod h1:Zm4s/Z+RTUEjW0biT10WALzo22L+K+K6AkACi4xG2iw=
+gitlab.badanamu.com.cn/calmisland/krypton v1.2.15 h1:eCTuFNNs/ruJZs+3y8ZCHq+5VCwjOydJLJgHd1Iz3sQ=
+gitlab.badanamu.com.cn/calmisland/krypton v1.2.15/go.mod h1:Zm4s/Z+RTUEjW0biT10WALzo22L+K+K6AkACi4xG2iw=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.4 h1:hi1bXHMVrlQh6WwxAy+qZCV/SYIlqo+Ushwdpa4tAKg=

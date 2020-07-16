@@ -11,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
 	gitlab.badanamu.com.cn/calmisland/common-cn v0.14.0
-	gitlab.badanamu.com.cn/calmisland/krypton v1.2.14
+	gitlab.badanamu.com.cn/calmisland/krypton v1.2.15
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
 )
 

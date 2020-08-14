@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 	"time"
+
+	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 
 	log "gitlab.badanamu.com.cn/calmisland/common-cn/logger"
 )
@@ -16,9 +17,9 @@ const (
 )
 
 func getDBTransactionTimeout() time.Duration {
-	second :=krconfig.CommonShareConfig().Db.Mysql.TransactionTimeoutSecond
-	if second >0 {
-		return time.Duration(int64(time.Second)*int64(second))
+	second := krconfig.CommonShareConfig().Db.Mysql.TransactionTimeoutSecond
+	if second > 0 {
+		return time.Duration(int64(time.Second) * int64(second))
 	}
 	return DBTransactionTimeout
 }
@@ -26,7 +27,6 @@ func getDBTransactionTimeout() time.Duration {
 // GetTrans begin a transaction
 func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) error) error {
 	log.WithContext(ctx).Debug("begin transaction")
-
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
 	defer cancel()
@@ -144,6 +144,10 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	}
 
 	if funcResult.Error != nil {
+		log.WithContext(ctxWithTimeout).
+			WithError(funcResult.Error).
+			Debug("transaction failed")
+
 		err1 := db.RollbackUnlessCommitted().Error
 		if err1 != nil {
 			log.WithContext(ctxWithTimeout).
@@ -152,7 +156,9 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 				WithField("outer error", funcResult.Error.Error()).
 				Error("rollback transaction failed")
 		} else {
-			log.WithContext(ctxWithTimeout).Debug("rollback transaction success")
+			log.WithContext(ctxWithTimeout).
+				WithError(funcResult.Error).
+				Debug("rollback transaction success")
 		}
 		return nil, funcResult.Error
 	}

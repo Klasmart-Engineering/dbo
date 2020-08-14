@@ -101,7 +101,7 @@ type transactionResult struct {
 
 // GetTransResult begin a transaction, get result of callback
 func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBContext) (interface{}, error)) (interface{}, error) {
-	log.WithContext(ctx).Debug("begin transaction")
+	log.WithStacks().WithContext(ctx).Debug("begin transaction")
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
 	defer cancel()
@@ -133,30 +133,34 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	var funcResult *transactionResult
 	select {
 	case funcResult = <-funcDone:
-		log.WithContext(ctxWithTimeout).Debug("transaction fn done")
+		log.WithStacks().
+			WithContext(ctxWithTimeout).
+			Debug("transaction fn done")
 	case <-ctxWithTimeout.Done():
 		// context deadline exceeded
 		funcResult = &transactionResult{Error: ctxWithTimeout.Err()}
-		log.WithContext(ctxWithTimeout).
+		log.WithStacks().
+			WithContext(ctxWithTimeout).
 			WithError(ctxWithTimeout.Err()).
-			WithStacks().
 			Error("transaction context deadline exceeded")
 	}
 
 	if funcResult.Error != nil {
-		log.WithContext(ctxWithTimeout).
+		log.WithStacks().
+			WithContext(ctxWithTimeout).
 			WithError(funcResult.Error).
 			Debug("transaction failed")
 
 		err1 := db.RollbackUnlessCommitted().Error
 		if err1 != nil {
-			log.WithContext(ctxWithTimeout).
+			log.WithStacks().
+				WithContext(ctxWithTimeout).
 				WithError(err1).
-				WithStacks().
-				WithField("outer error", funcResult.Error.Error()).
+				WithField("transaction error", funcResult.Error.Error()).
 				Error("rollback transaction failed")
 		} else {
 			log.WithContext(ctxWithTimeout).
+				WithStacks().
 				WithError(funcResult.Error).
 				Debug("rollback transaction success")
 		}
@@ -165,14 +169,14 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 
 	err = db.Commit().Error
 	if err != nil {
-		log.WithContext(ctxWithTimeout).
+		log.WithStacks().
+			WithContext(ctxWithTimeout).
 			WithError(err).
-			WithStacks().
 			Error("commit transaction failed")
 		return nil, err
 	}
 
-	log.WithContext(ctxWithTimeout).Debug("commit transaction success")
+	log.WithStacks().WithContext(ctxWithTimeout).Debug("commit transaction success")
 
 	return funcResult.Result, nil
 }

@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	"gitlab.badanamu.com.cn/calmisland/common-cn/logger"
+	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 )
 
@@ -26,7 +26,7 @@ var (
 func MustGetDB(ctx context.Context) *DBContext {
 	dbContext, err := GetDB(ctx)
 	if err != nil {
-		logger.WithError(err).Panic("get db context failed")
+		log.Panic(ctx, "get db context failed", log.Err(err))
 	}
 
 	return dbContext
@@ -103,19 +103,13 @@ func New(options ...Option) (*DBO, error) {
 
 	db, err := gorm.Open("mysql", config.ConnectionString)
 	if err != nil {
-		logger.WithError(err).
-			WithStacks().
-			WithField("conn", config.ConnectionString).
-			Error("init mysql connection failed")
+		log.Error(context.Background(), "init mysql connection failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
 	err = db.DB().Ping()
 	if err != nil {
-		logger.WithError(err).
-			WithStacks().
-			WithField("conn", config.ConnectionString).
-			Error("ping mysql datebase failed")
+		log.Error(context.Background(), "ping mysql datebase failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
@@ -141,19 +135,13 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 
 	db, err := gorm.Open("mysql", config.ConnectionString)
 	if err != nil {
-		logger.WithError(err).
-			WithStacks().
-			WithField("conn", config.ConnectionString).
-			Error("init mysql connection failed")
+		log.Error(context.Background(), "init mysql connection failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
 	err = db.DB().Ping()
 	if err != nil {
-		logger.WithError(err).
-			WithStacks().
-			WithField("conn", config.ConnectionString).
-			Error("ping mysql datebase failed")
+		log.Error(context.Background(), "ping mysql datebase failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 

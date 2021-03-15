@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	log "gitlab.badanamu.com.cn/calmisland/common-cn/logger"
+	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 )
 
 type BaseDA struct{}
@@ -27,31 +27,26 @@ func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) 
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if ok && me.Number == 1062 {
-			log.WithError(err).
-				WithContext(ctx).
-				WithStacks().
-				WithField("tableName", db.NewScope(value).TableName()).
-				WithField("value", value).
-				WithField("duration", time.Now().Sub(start).String()).
-				Error("insert duplicate record")
+			log.Error(ctx, "insert duplicate record",
+				log.Err(me),
+				log.String("tableName", db.NewScope(value).TableName()),
+				log.Any("value", value),
+				log.Duration("duration", time.Since(start)))
 			return 0, ErrDuplicateRecord
 		}
 
-		log.WithError(err).
-			WithContext(ctx).
-			WithStacks().
-			WithField("tableName", db.NewScope(value).TableName()).
-			WithField("value", value).
-			WithField("duration", time.Now().Sub(start).String()).
-			Error("insert failed")
+		log.Error(ctx, "insert failed",
+			log.Err(err),
+			log.String("tableName", db.NewScope(value).TableName()),
+			log.Any("value", value),
+			log.Duration("duration", time.Since(start)))
 		return nil, err
 	}
 
-	log.WithContext(ctx).
-		WithField("tableName", db.NewScope(value).TableName()).
-		WithField("value", value).
-		WithField("duration", time.Now().Sub(start).String()).
-		Debug("insert success")
+	log.Debug(ctx, "insert success",
+		log.String("tableName", db.NewScope(value).TableName()),
+		log.Any("value", value),
+		log.Duration("duration", time.Since(start)))
 
 	return value, nil
 }
@@ -71,31 +66,26 @@ func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) 
 	if newDB.Error != nil {
 		me, ok := newDB.Error.(*mysql.MySQLError)
 		if ok && me.Number == 1062 {
-			log.WithError(newDB.Error).
-				WithContext(ctx).
-				WithStacks().
-				WithField("tableName", db.NewScope(value).TableName()).
-				WithField("value", value).
-				WithField("duration", time.Now().Sub(start).String()).
-				Error("update duplicate record")
+			log.Error(ctx, "update duplicate record",
+				log.Err(me),
+				log.String("tableName", db.NewScope(value).TableName()),
+				log.Any("value", value),
+				log.Duration("duration", time.Since(start)))
 			return 0, ErrDuplicateRecord
 		}
 
-		log.WithError(newDB.Error).
-			WithContext(ctx).
-			WithStacks().
-			WithField("tableName", db.NewScope(value).TableName()).
-			WithField("value", value).
-			WithField("duration", time.Now().Sub(start).String()).
-			Error("update failed")
+		log.Error(ctx, "update failed",
+			log.Err(newDB.Error),
+			log.String("tableName", db.NewScope(value).TableName()),
+			log.Any("value", value),
+			log.Duration("duration", time.Since(start)))
 		return 0, newDB.Error
 	}
 
-	log.WithContext(ctx).
-		WithField("tableName", db.NewScope(value).TableName()).
-		WithField("value", value).
-		WithField("duration", time.Now().Sub(start).String()).
-		Debug("update success")
+	log.Debug(ctx, "update success",
+		log.String("tableName", db.NewScope(value).TableName()),
+		log.Any("value", value),
+		log.Duration("duration", time.Since(start)))
 
 	return newDB.RowsAffected, nil
 }
@@ -113,21 +103,18 @@ func (s BaseDA) SaveTx(ctx context.Context, db *DBContext, value interface{}) er
 	start := time.Now()
 	err := db.Clone().Save(value).Error
 	if err != nil {
-		log.WithError(err).
-			WithContext(ctx).
-			WithStacks().
-			WithField("tableName", db.NewScope(value).TableName()).
-			WithField("value", value).
-			WithField("duration", time.Now().Sub(start).String()).
-			Error("save failed")
+		log.Error(ctx, "save failed",
+			log.Err(err),
+			log.String("tableName", db.NewScope(value).TableName()),
+			log.Any("value", value),
+			log.Duration("duration", time.Since(start)))
 		return err
 	}
 
-	log.WithContext(ctx).
-		WithField("tableName", db.NewScope(value).TableName()).
-		WithField("value", value).
-		WithField("duration", time.Now().Sub(start).String()).
-		Debug("save success")
+	log.Debug(ctx, "save success",
+		log.String("tableName", db.NewScope(value).TableName()),
+		log.Any("value", value),
+		log.Duration("duration", time.Since(start)))
 
 	return nil
 }
@@ -145,23 +132,20 @@ func (s BaseDA) GetTx(ctx context.Context, db *DBContext, id interface{}, value 
 	start := time.Now()
 	err := db.Clone().Where("id=?", id).First(value).Error
 	if err == nil {
-		log.WithContext(ctx).
-			WithField("tableName", db.NewScope(value).TableName()).
-			WithField("id", id).
-			WithField("value", value).
-			WithField("duration", time.Now().Sub(start).String()).
-			Debug("get by id success")
+		log.Debug(ctx, "get by id success",
+			log.Any("id", id),
+			log.String("tableName", db.NewScope(value).TableName()),
+			log.Any("value", value),
+			log.Duration("duration", time.Since(start)))
 		return nil
 	}
 
-	log.WithError(err).
-		WithContext(ctx).
-		WithStacks().
-		WithField("tableName", db.NewScope(value).TableName()).
-		WithField("id", id).
-		WithField("value", value).
-		WithField("duration", time.Now().Sub(start).String()).
-		Error("get by id failed")
+	log.Error(ctx, "get by id failed",
+		log.Err(err),
+		log.Any("id", id),
+		log.String("tableName", db.NewScope(value).TableName()),
+		log.Any("value", value),
+		log.Duration("duration", time.Since(start)))
 
 	if gorm.IsRecordNotFoundError(err) {
 		return ErrRecordNotFound
@@ -201,24 +185,22 @@ func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions
 	start := time.Now()
 	err := db.Find(values).Error
 	if err != nil {
-		log.WithError(err).
-			WithContext(ctx).
-			WithStacks().
-			WithField("tableName", db.NewScope(values).TableName()).
-			WithField("condition", condition).
-			WithField("pager", pager).
-			WithField("orderBy", orderBy).
-			Error("query values failed")
+		log.Error(ctx, "query values failed",
+			log.Err(err),
+			log.String("tableName", db.NewScope(values).TableName()),
+			log.Any("condition", condition),
+			log.Any("pager", pager),
+			log.String("orderBy", orderBy),
+			log.Duration("duration", time.Since(start)))
 		return err
 	}
 
-	log.WithContext(ctx).
-		WithField("tableName", db.NewScope(values).TableName()).
-		WithField("condition", condition).
-		WithField("pager", pager).
-		WithField("orderBy", orderBy).
-		WithField("duration", time.Now().Sub(start).String()).
-		Debug("query values success")
+	log.Debug(ctx, "query values success",
+		log.String("tableName", db.NewScope(values).TableName()),
+		log.Any("condition", condition),
+		log.Any("pager", pager),
+		log.String("orderBy", orderBy),
+		log.Duration("duration", time.Since(start)))
 
 	return nil
 }
@@ -244,20 +226,18 @@ func (s BaseDA) CountTx(ctx context.Context, db *DBContext, condition Conditions
 	tableName := db.NewScope(value).TableName()
 	err := db.Table(tableName).Count(&total).Error
 	if err != nil {
-		log.WithError(err).
-			WithContext(ctx).
-			WithStacks().
-			WithField("tableName", tableName).
-			WithField("condition", condition).
-			Error("count failed")
+		log.Error(ctx, "count failed",
+			log.Err(err),
+			log.String("tableName", db.NewScope(value).TableName()),
+			log.Any("condition", condition),
+			log.Duration("duration", time.Since(start)))
 		return 0, err
 	}
 
-	log.WithContext(ctx).
-		WithField("tableName", tableName).
-		WithField("condition", condition).
-		WithField("duration", time.Now().Sub(start).String()).
-		Debug("count success")
+	log.Debug(ctx, "count success",
+		log.String("tableName", db.NewScope(value).TableName()),
+		log.Any("condition", condition),
+		log.Duration("duration", time.Since(start)))
 
 	return total, nil
 }

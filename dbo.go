@@ -5,6 +5,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
@@ -58,11 +59,12 @@ func ReplaceGlobal(dbo *DBO) {
 
 // Config dbo config
 type Config struct {
-	ConnectionString string
-	MaxOpenConns     int
-	MaxIdleConns     int
-	ShowLog          bool
-	ShowSQL          bool
+	ConnectionString   string
+	MaxOpenConns       int
+	MaxIdleConns       int
+	ShowLog            bool
+	ShowSQL            bool
+	TransactionTimeout time.Duration
 }
 
 func getDefaultConfig() (*Config, error) {
@@ -73,11 +75,12 @@ func getDefaultConfig() (*Config, error) {
 
 	cfg := krconfig.CommonShareConfig()
 	return &Config{
-		ConnectionString: cfg.Db.Mysql.ConnStr,
-		MaxOpenConns:     cfg.Db.Mysql.Params.DbMaxOpenConn,
-		MaxIdleConns:     cfg.Db.Mysql.Params.DbMaxIdleConn,
-		ShowLog:          cfg.Db.Mysql.Params.DbShowLog,
-		ShowSQL:          cfg.Db.Mysql.Params.Debug,
+		ConnectionString:   cfg.Db.Mysql.ConnStr,
+		MaxOpenConns:       cfg.Db.Mysql.Params.DbMaxOpenConn,
+		MaxIdleConns:       cfg.Db.Mysql.Params.DbMaxIdleConn,
+		ShowLog:            cfg.Db.Mysql.Params.DbShowLog,
+		ShowSQL:            cfg.Db.Mysql.Params.Debug,
+		TransactionTimeout: dbTransactionTimeout,
 	}, nil
 }
 
@@ -123,6 +126,8 @@ func New(options ...Option) (*DBO, error) {
 	if config.MaxIdleConns > 0 {
 		db.DB().SetMaxIdleConns(config.MaxIdleConns)
 	}
+
+	dbTransactionTimeout = config.TransactionTimeout
 
 	return &DBO{db, config}, nil
 }
@@ -199,6 +204,12 @@ func WithShowLog(showLog bool) Option {
 func WithShowSQL(showSQL bool) Option {
 	return func(c *Config) {
 		c.ShowSQL = showSQL
+	}
+}
+
+func WithTransactionTimeout(timeout time.Duration) Option {
+	return func(c *Config) {
+		c.TransactionTimeout = timeout
 	}
 }
 

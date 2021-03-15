@@ -11,9 +11,9 @@ import (
 	log "gitlab.badanamu.com.cn/calmisland/common-cn/logger"
 )
 
-const (
-	// DBTransactionTimeout transaction timeout
-	DBTransactionTimeout = time.Second * 3
+var (
+	// dbTransactionTimeout transaction timeout
+	dbTransactionTimeout = time.Second * 3
 )
 
 func getDBTransactionTimeout() time.Duration {
@@ -21,7 +21,7 @@ func getDBTransactionTimeout() time.Duration {
 	if second > 0 {
 		return time.Duration(int64(time.Second) * int64(second))
 	}
-	return DBTransactionTimeout
+	return dbTransactionTimeout
 }
 
 // GetTrans begin a transaction

@@ -37,7 +37,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 
 	db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
 
-	funcDone := make(chan error, 0)
+	funcDone := make(chan error)
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {
@@ -75,7 +75,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 		return err
 	}
 
-	log.Error(ctxWithTimeout, "commit transaction success")
+	log.Debug(ctxWithTimeout, "commit transaction success")
 
 	return nil
 }
@@ -99,7 +99,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 
 	db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
 
-	funcDone := make(chan *transactionResult, 0)
+	funcDone := make(chan *transactionResult)
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {

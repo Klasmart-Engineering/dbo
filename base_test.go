@@ -1,10 +1,8 @@
-package Test
-
+package dbo
 import (
 	"context"
 	"fmt"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
-	"gitlab.badanamu.com.cn/calmisland/dbo"
 	"testing"
 )
 type Class struct {
@@ -20,7 +18,7 @@ func (Class) TableName() string {
 type ClassConditions struct {
 	ID int
 	Name string
-	Pager   dbo.Pager
+	Pager   Pager
 }
 
 func (c *ClassConditions) GetConditions() ([]string, []interface{}) {
@@ -37,7 +35,7 @@ func (c *ClassConditions) GetConditions() ([]string, []interface{}) {
 	return wheres, params
 }
 
-func (c *ClassConditions) GetPager() *dbo.Pager {
+func (c *ClassConditions) GetPager() *Pager {
 	return &c.Pager
 }
 
@@ -46,7 +44,7 @@ func (c *ClassConditions) GetOrderBy() string {
 }
 
 func initDB()  {
-	dboHandler, err := dbo.NewWithConfig(func(c *dbo.Config) {
+	dboHandler, err := NewWithConfig(func(c *Config) {
 		c.ShowLog = true
 		c.ShowSQL = true
 		c.MaxIdleConns = 10
@@ -57,7 +55,7 @@ func initDB()  {
 		log.Error(context.TODO(), "create dbo failed", log.Err(err))
 		panic(err)
 	}
-	dbo.ReplaceGlobal(dboHandler)
+	ReplaceGlobal(dboHandler)
 }
 
 func TestMain(m *testing.M) {
@@ -69,7 +67,7 @@ func TestMain(m *testing.M) {
 
 func TestFind(t *testing.T) {
 	ctx := context.Background()
-	db:=dbo.MustGetDB(ctx)
+	db:=MustGetDB(ctx)
 	var class []Class
 	err:=db.DB.Find(&class, "id in (1,2,3)").Error
 	fmt.Println(err,class)
@@ -78,7 +76,7 @@ func TestFind(t *testing.T) {
 func TestInsert(t *testing.T) {
 	ctx := context.Background()
 	class:=Class{Name: "班级四"}
-	_,err:=dbo.BaseDA{}.Insert(ctx,&class)
+	_,err:=BaseDA{}.Insert(ctx,&class)
 	fmt.Println(err,class)
 }
 
@@ -86,7 +84,7 @@ func TestInsert(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
 	class:=Class{ID:31,Name: "班级三十"}
-	_,err:=dbo.BaseDA{}.Update(ctx,&class)
+	_,err:=BaseDA{}.Update(ctx,&class)
 	fmt.Println(err,class)
 }
 
@@ -94,16 +92,16 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 	var class Class
 	var id =31
-	err:=dbo.BaseDA{}.Get(ctx,id,&class)
+	err:=BaseDA{}.Get(ctx,id,&class)
 	fmt.Println(err,class)
 }
 
 func TestQuery(t *testing.T) {
 	ctx := context.Background()
 	var classes []Class
-    //condition:=ClassConditions{ID: 1}
+	//condition:=ClassConditions{ID: 1}
 	condition:=ClassConditions{Name: "班级三十"}
-	err:=dbo.BaseDA{}.Query(ctx,&condition,&classes)
+	err:=BaseDA{}.Query(ctx,&condition,&classes)
 	fmt.Println(err,classes)
 }
 func TestCount(t *testing.T) {
@@ -111,40 +109,39 @@ func TestCount(t *testing.T) {
 	var class []Class
 	//condition:=ClassConditions{ID: 1}
 	condition:=ClassConditions{}
-	count,err:=dbo.BaseDA{}.Count(ctx,&condition,&class)
+	count,err:=BaseDA{}.Count(ctx,&condition,&class)
 	fmt.Println(err,count)
 }
 func TestPage(t *testing.T) {
 	ctx := context.Background()
 	var class []Class
 	//condition:=ClassConditions{ID: 1}
-	condition:=ClassConditions{Pager:dbo.Pager{Page:1,PageSize: 2}}
-	count,err:=dbo.BaseDA{}.Page(ctx,&condition,&class)
+	condition:=ClassConditions{Pager:Pager{Page:1,PageSize: 2}}
+	count,err:=BaseDA{}.Page(ctx,&condition,&class)
 	fmt.Println(err,count,class)
 }
 
 func TestTrans(t *testing.T) {
 	ctx := context.Background()
-	err:=dbo.GetTrans(ctx, func(ctx context.Context, tx *dbo.DBContext) error {
-		db:=dbo.MustGetDB(ctx)
+	err:=GetTrans(ctx, func(ctx context.Context, tx *DBContext) error {
+		db:=MustGetDB(ctx)
 		classInsert:=Class{Name: "班级三十七"}
-		_,errInsert:=dbo.BaseDA{}.InsertTx(ctx,db,&classInsert)
+		_,errInsert:=BaseDA{}.InsertTx(ctx,db,&classInsert)
 		fmt.Println(errInsert,classInsert)
-        if errInsert!=nil{
-        	return errInsert
+		if errInsert!=nil{
+			return errInsert
 		}
-
 
 		var classGet Class
 		var id =31
-		errGet:=dbo.BaseDA{}.GetTx(ctx,db,id,&classGet)
+		errGet:=BaseDA{}.GetTx(ctx,db,id,&classGet)
 		fmt.Println(errGet,classGet)
 		if errGet!=nil{
 			return errGet
 		}
 
 		class:=Class{ID:31,Name: "班级三十"}
-		_,errUpdate:=dbo.BaseDA{}.Update(ctx,&class)
+		_,errUpdate:=BaseDA{}.Update(ctx,&class)
 		fmt.Println(errUpdate,class)
 		if errUpdate!=nil{
 			return errUpdate
@@ -152,37 +149,30 @@ func TestTrans(t *testing.T) {
 
 		var classes []Class
 		conditionClasses:=ClassConditions{Name: "班级三十"}
-		errQuery:=dbo.BaseDA{}.QueryTx(ctx,db,&conditionClasses,&classes)
+		errQuery:=BaseDA{}.QueryTx(ctx,db,&conditionClasses,&classes)
 		fmt.Println(errQuery,classes)
 		if errQuery!=nil{
 			return errQuery
 		}
 
-
-
 		var classCount []Class
 		conditionClassCount:=ClassConditions{}
-		count,errCount:=dbo.BaseDA{}.Count(ctx,&conditionClassCount,&classCount)
+		count,errCount:=BaseDA{}.Count(ctx,&conditionClassCount,&classCount)
 		fmt.Println(errCount,count)
 		if errCount!=nil{
 			return errCount
 		}
 
-
-
 		var classPage []Class
-		//condition:=ClassConditions{ID: 1}
-		conditionPage:=ClassConditions{Pager:dbo.Pager{Page:1,PageSize: 2}}
-		countPage,errPage:=dbo.BaseDA{}.Page(ctx,&conditionPage,&classPage)
+		conditionPage:=ClassConditions{Pager:Pager{Page:1,PageSize: 2}}
+		countPage,errPage:=BaseDA{}.Page(ctx,&conditionPage,&classPage)
 		fmt.Println(errPage,countPage,classPage)
 		if errPage!=nil{
 			return errPage
 		}
-
 		return nil
 	})
 	if err != nil {
 		fmt.Println(err)
 	}
-
 }

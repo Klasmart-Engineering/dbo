@@ -3,6 +3,7 @@ import (
 	"context"
 	"fmt"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
+	"gorm.io/gorm/logger"
 	"testing"
 )
 type Class struct {
@@ -50,6 +51,7 @@ func initDB()  {
 		c.MaxIdleConns = 10
 		c.MaxOpenConns = 10
 		c.ConnectionString = "root:123456@tcp(127.0.0.1:3306)/ai_facerecognition?charset=utf8mb4&parseTime=True&loc=Local"
+		c.LogLevel=logger.Info
 	})
 	if err != nil {
 		log.Error(context.TODO(), "create dbo failed", log.Err(err))
@@ -73,13 +75,31 @@ func TestFind(t *testing.T) {
 	fmt.Println(err,class)
 }
 
-func TestInsert(t *testing.T) {
+func TestInsertSingle(t *testing.T) {
 	ctx := context.Background()
 	class:=Class{Name: "班级四"}
 	_,err:=BaseDA{}.Insert(ctx,&class)
 	fmt.Println(err,class)
 }
+func TestInsertMany(t *testing.T) {
+	ctx := context.Background()
+	var classes []Class
+	classes=append(classes, Class{Name: "班级101"})
+	classes=append(classes, Class{Name: "班级102"})
+	_,err:=BaseDA{}.Insert(ctx,&classes)
+	fmt.Println(err,classes)
+}
 
+func TestInsertBatches(t *testing.T)  {
+	ctx := context.Background()
+	var classes []Class
+	classes=append(classes, Class{Name: "班级110"})
+	classes=append(classes, Class{Name: "班级111"})
+	classes=append(classes, Class{Name: "班级112"})
+	classes=append(classes, Class{Name: "班级113"})
+	_,err:=BaseDA{}.InsertInBatches(ctx,&classes,3)
+	fmt.Println(err,classes)
+}
 
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
@@ -98,10 +118,11 @@ func TestGet(t *testing.T) {
 
 func TestQuery(t *testing.T) {
 	ctx := context.Background()
+	cty:=context.WithValue(ctx,"test","test1111")
 	var classes []Class
 	//condition:=ClassConditions{ID: 1}
 	condition:=ClassConditions{Name: "班级三十"}
-	err:=BaseDA{}.Query(ctx,&condition,&classes)
+	err:=BaseDA{}.Query(cty,&condition,&classes)
 	fmt.Println(err,classes)
 }
 func TestCount(t *testing.T) {
@@ -125,12 +146,27 @@ func TestTrans(t *testing.T) {
 	ctx := context.Background()
 	err:=GetTrans(ctx, func(ctx context.Context, tx *DBContext) error {
 		db:=MustGetDB(ctx)
-		classInsert:=Class{Name: "班级三十七"}
-		_,errInsert:=BaseDA{}.InsertTx(ctx,db,&classInsert)
-		fmt.Println(errInsert,classInsert)
-		if errInsert!=nil{
-			return errInsert
+		classInsertSingle:=Class{Name: "班级三十七"}
+		_,errInsertSingle:=BaseDA{}.InsertTx(ctx,db,&classInsertSingle)
+		fmt.Println(errInsertSingle,classInsertSingle)
+		if errInsertSingle!=nil{
+			return errInsertSingle
 		}
+
+		classInsertMany:=[]Class{{Name: "班级三十七"},{Name: "班级三十八"}}
+		_,errInsertMany:=BaseDA{}.InsertTx(ctx,db,&classInsertMany)
+		fmt.Println(errInsertMany,classInsertMany)
+		if errInsertMany!=nil{
+			return errInsertMany
+		}
+		classInsertInBatches:=[]Class{{Name: "班级三十七"},{Name: "班级三十八"},{Name: "班级三十九"}}
+		_,errInsertInBatches:=BaseDA{}.InsertInBatchesTx(ctx,db,&classInsertInBatches,2)
+		fmt.Println(errInsertInBatches,classInsertInBatches)
+		if errInsertInBatches!=nil{
+			return errInsertInBatches
+		}
+
+
 
 		var classGet Class
 		var id =31
@@ -155,9 +191,9 @@ func TestTrans(t *testing.T) {
 			return errQuery
 		}
 
-		var classCount []Class
+		var classCount Class
 		conditionClassCount:=ClassConditions{}
-		count,errCount:=BaseDA{}.Count(ctx,&conditionClassCount,&classCount)
+		count,errCount:=BaseDA{}.Count(ctx,&conditionClassCount,classCount)
 		fmt.Println(errCount,count)
 		if errCount!=nil{
 			return errCount

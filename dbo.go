@@ -65,6 +65,7 @@ type Config struct {
 	ShowLog            bool
 	ShowSQL            bool
 	TransactionTimeout time.Duration
+	LogLevel    logger.LogLevel
 }
 
 func getDefaultConfig() (*Config, error) {
@@ -160,7 +161,6 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 	if config.MaxIdleConns > 0 {
 		sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	}
-
 	return &DBO{db, config}, nil
 }
 
@@ -210,13 +210,13 @@ func WithTransactionTimeout(timeout time.Duration) Option {
 }
 
 func (s DBO) GetDB(ctx context.Context) *DBContext {
-	ctxDB := &DBContext{DB: s.db.WithContext(ctx), ctx: ctx}
+	ctxDB := &DBContext{DB: s.db}
 	if s.config.ShowSQL {
 		newLogger := logger.New(
 			ctxDB,
 			logger.Config{
 				SlowThreshold: time.Microsecond,
-				LogLevel:      logger.Info,
+				LogLevel:      s.config.LogLevel,
 				IgnoreRecordNotFoundError: true,
 				Colorful:      false,
 			},

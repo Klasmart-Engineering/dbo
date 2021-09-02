@@ -34,10 +34,8 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 		return err
 	}
 
-
-
 	//db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
-   db.DB=db.Begin(&sql.TxOptions{})
+	db.DB = db.Begin(&sql.TxOptions{})
 	funcDone := make(chan error)
 	go func() {
 		defer func() {

@@ -65,7 +65,7 @@ type Config struct {
 	ShowLog            bool
 	ShowSQL            bool
 	TransactionTimeout time.Duration
-	LogLevel    logger.LogLevel
+	LogLevel           logger.LogLevel
 }
 
 func getDefaultConfig() (*Config, error) {
@@ -210,18 +210,18 @@ func WithTransactionTimeout(timeout time.Duration) Option {
 }
 
 func (s DBO) GetDB(ctx context.Context) *DBContext {
-	ctxDB := &DBContext{DB: s.db}
+	ctxDB := &DBContext{DB: s.db.WithContext(ctx)}
 	if s.config.ShowSQL {
 		newLogger := logger.New(
 			ctxDB,
 			logger.Config{
-				SlowThreshold: time.Microsecond,
-				LogLevel:      s.config.LogLevel,
+				SlowThreshold:             time.Microsecond,
+				LogLevel:                  s.config.LogLevel,
 				IgnoreRecordNotFoundError: true,
-				Colorful:      false,
+				Colorful:                  false,
 			},
 		)
-		ctxDB.Logger=newLogger
+		ctxDB.Logger = newLogger
 	}
 	return ctxDB
 }

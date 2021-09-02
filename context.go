@@ -3,15 +3,17 @@ package dbo
 import (
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gorm.io/gorm"
+	"time"
 )
 
 // DBContext db with context
 type DBContext struct {
 	*gorm.DB
+	time.Time
 }
 
 // Print print sql log
-func (s *DBContext) Printf(format string,v ...interface{}) {
+func (s *DBContext) Printf(format string, v ...interface{}) {
 	if len(v) != 5 {
 		log.Debug(s.DB.Statement.Context, "invalid sql log", log.Any("args", v), log.String("logType", "sql"))
 		return
@@ -21,13 +23,13 @@ func (s *DBContext) Printf(format string,v ...interface{}) {
 		log.String("logType", "sql"),
 		log.String("sql", v[4].(string)),
 		log.Any("rowsAffected", v[3]),
-		log.Float64("duration", v[2].(float64)))
+		log.Int64("duration", int64(v[2].(float64))))
 }
 
-func (s *DBContext) getTableName(value interface{}) string{
+func (s *DBContext) GetTableName(value interface{}) string {
 	stmt := &gorm.Statement{DB: s.DB}
-	err:=stmt.Parse(value)
-	if err != nil{
+	err := stmt.Parse(value)
+	if err != nil {
 		return ""
 	}
 	return stmt.Schema.Table

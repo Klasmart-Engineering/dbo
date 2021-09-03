@@ -78,7 +78,7 @@ func TestFind(t *testing.T) {
 
 func TestInsertSingle(t *testing.T) {
 	ctx := context.Background()
-	class := Class{Name: "class四"}
+	class := Class{Name: "class4"}
 	_, err := BaseDA{}.Insert(ctx, &class)
 	fmt.Println(err, class)
 }
@@ -104,7 +104,7 @@ func TestInsertBatches(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
-	class := Class{ID: 31, Name: "class三十"}
+	class := Class{ID: 31, Name: "class30"}
 	_, err := BaseDA{}.Update(ctx, &class)
 	fmt.Println(err, class)
 }
@@ -210,4 +210,41 @@ func TestTrans(t *testing.T) {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func BenchmarkInsertParallel(b *testing.B) {
+	//b.SetParallelism(10)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			ctx := context.Background()
+			class := Class{Name: "class4"}
+			BaseDA{}.Insert(ctx, &class)
+		}
+	})
+	fmt.Println(b.N)
+}
+
+func BenchmarkUpdateParallel(b *testing.B) {
+	//b.SetParallelism(10)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			ctx := context.Background()
+			class := Class{ID: 44899, Name: "class30"}
+			BaseDA{}.Update(ctx, &class)
+		}
+	})
+	fmt.Println(b.N)
+}
+
+func BenchmarkQueryParallel(b *testing.B) {
+	b.SetParallelism(10)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			ctx := context.Background()
+			var classes []Class
+			condition := ClassConditions{Name: "class30"}
+			BaseDA{}.Query(ctx, &condition, &classes)
+		}
+	})
+	fmt.Println(b.N)
 }

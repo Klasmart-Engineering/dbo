@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
-
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
+	"time"
 )
 
 var (
@@ -35,8 +34,8 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 		return err
 	}
 
-	db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
-
+	//db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
+	db.DB = db.Begin(&sql.TxOptions{})
 	funcDone := make(chan error)
 	go func() {
 		defer func() {
@@ -60,7 +59,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 	}
 
 	if err != nil {
-		err1 := db.RollbackUnlessCommitted().Error
+		err1 := db.Rollback().Error
 		if err1 != nil {
 			log.Error(ctxWithTimeout, "rollback transaction failed", log.String("outer error", err.Error()), log.Err(err1))
 		} else {
@@ -97,7 +96,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 		return nil, err
 	}
 
-	db.DB = db.BeginTx(ctxWithTimeout, &sql.TxOptions{})
+	db.DB = db.Begin(&sql.TxOptions{})
 
 	funcDone := make(chan *transactionResult)
 	go func() {
@@ -126,7 +125,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	if funcResult.Error != nil {
 		log.Error(ctxWithTimeout, "transaction failed", log.Err(funcResult.Error))
 
-		err1 := db.RollbackUnlessCommitted().Error
+		err1 := db.Rollback().Error
 		if err1 != nil {
 			log.Error(ctxWithTimeout, "rollback transaction failed",
 				log.String("transaction error", funcResult.Error.Error()),

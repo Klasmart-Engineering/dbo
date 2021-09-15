@@ -2,11 +2,12 @@ package dbo
 
 import (
 	"context"
+	"errors"
+	"github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 )
 
@@ -23,13 +24,13 @@ func (s BaseDA) Insert(ctx context.Context, value interface{}) (interface{}, err
 
 func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) (interface{}, error) {
 	start := time.Now()
-	err := db.Clone().Create(value).Error
+	err := db.Create(value).Error
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if ok && me.Number == 1062 {
 			log.Error(ctx, "insert duplicate record",
 				log.Err(me),
-				log.String("tableName", db.NewScope(value).TableName()),
+				log.String("tableName", db.GetTableName(value)),
 				log.Any("value", value),
 				log.Duration("duration", time.Since(start)))
 			return 0, ErrDuplicateRecord
@@ -37,14 +38,55 @@ func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) 
 
 		log.Error(ctx, "insert failed",
 			log.Err(err),
-			log.String("tableName", db.NewScope(value).TableName()),
+			log.String("tableName", db.GetTableName(value)),
 			log.Any("value", value),
 			log.Duration("duration", time.Since(start)))
 		return nil, err
 	}
 
 	log.Debug(ctx, "insert success",
-		log.String("tableName", db.NewScope(value).TableName()),
+		log.String("tableName", db.GetTableName(value)),
+		log.Any("value", value),
+		log.Duration("duration", time.Since(start)))
+
+	return value, nil
+}
+
+// batchSize https://gorm.io/docs/create.html
+func (s BaseDA) InsertInBatches(ctx context.Context, value interface{}, batchSize int) (interface{}, error) {
+	db, err := GetDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.InsertInBatchesTx(ctx, db, value, batchSize)
+}
+
+//batchSize https://gorm.io/docs/create.html
+func (s BaseDA) InsertInBatchesTx(ctx context.Context, db *DBContext, value interface{}, batchSize int) (interface{}, error) {
+	start := time.Now()
+	err := db.CreateInBatches(value, batchSize).Error
+	if err != nil {
+		me, ok := err.(*mysql.MySQLError)
+		if ok && me.Number == 1062 {
+			log.Error(ctx, "insertBatches duplicate record",
+				log.Err(me),
+				log.String("tableName", db.GetTableName(value)),
+				log.Any("value", value),
+				log.Duration("duration", time.Since(start)))
+			return 0, ErrDuplicateRecord
+		}
+
+		log.Error(ctx, "insertBatches failed",
+			log.Err(err),
+			log.String("tableName", db.GetTableName(value)),
+			log.Any("value", value),
+			log.Duration("duration", time.Since(start)))
+		return nil, err
+	}
+
+	log.Debug(ctx, "insertBatches success",
+		log.String("tableName", db.GetTableName(value)),
 		log.Any("value", value),
 		log.Duration("duration", time.Since(start)))
 
@@ -62,13 +104,14 @@ func (s BaseDA) Update(ctx context.Context, value interface{}) (int64, error) {
 
 func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) (int64, error) {
 	start := time.Now()
-	newDB := db.Clone().Save(value)
+	newDB := db.Save(value)
 	if newDB.Error != nil {
+
 		me, ok := newDB.Error.(*mysql.MySQLError)
 		if ok && me.Number == 1062 {
 			log.Error(ctx, "update duplicate record",
 				log.Err(me),
-				log.String("tableName", db.NewScope(value).TableName()),
+				log.String("tableName", db.GetTableName(value)),
 				log.Any("value", value),
 				log.Duration("duration", time.Since(start)))
 			return 0, ErrDuplicateRecord
@@ -76,14 +119,14 @@ func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) 
 
 		log.Error(ctx, "update failed",
 			log.Err(newDB.Error),
-			log.String("tableName", db.NewScope(value).TableName()),
+			log.String("tableName", db.GetTableName(value)),
 			log.Any("value", value),
 			log.Duration("duration", time.Since(start)))
 		return 0, newDB.Error
 	}
 
 	log.Debug(ctx, "update success",
-		log.String("tableName", db.NewScope(value).TableName()),
+		log.String("tableName", db.GetTableName(value)),
 		log.Any("value", value),
 		log.Duration("duration", time.Since(start)))
 
@@ -101,18 +144,18 @@ func (s BaseDA) Save(ctx context.Context, value interface{}) error {
 
 func (s BaseDA) SaveTx(ctx context.Context, db *DBContext, value interface{}) error {
 	start := time.Now()
-	err := db.Clone().Save(value).Error
+	err := db.Save(value).Error
 	if err != nil {
 		log.Error(ctx, "save failed",
 			log.Err(err),
-			log.String("tableName", db.NewScope(value).TableName()),
+			log.String("tableName", db.GetTableName(value)),
 			log.Any("value", value),
 			log.Duration("duration", time.Since(start)))
 		return err
 	}
 
 	log.Debug(ctx, "save success",
-		log.String("tableName", db.NewScope(value).TableName()),
+		log.String("tableName", db.GetTableName(value)),
 		log.Any("value", value),
 		log.Duration("duration", time.Since(start)))
 
@@ -130,11 +173,11 @@ func (s BaseDA) Get(ctx context.Context, id interface{}, value interface{}) erro
 
 func (s BaseDA) GetTx(ctx context.Context, db *DBContext, id interface{}, value interface{}) error {
 	start := time.Now()
-	err := db.Clone().Where("id=?", id).First(value).Error
+	err := db.Where("id=?", id).First(value).Error
 	if err == nil {
 		log.Debug(ctx, "get by id success",
 			log.Any("id", id),
-			log.String("tableName", db.NewScope(value).TableName()),
+			log.String("tableName", db.GetTableName(value)),
 			log.Any("value", value),
 			log.Duration("duration", time.Since(start)))
 		return nil
@@ -143,11 +186,11 @@ func (s BaseDA) GetTx(ctx context.Context, db *DBContext, id interface{}, value 
 	log.Error(ctx, "get by id failed",
 		log.Err(err),
 		log.Any("id", id),
-		log.String("tableName", db.NewScope(value).TableName()),
+		log.String("tableName", db.GetTableName(value)),
 		log.Any("value", value),
 		log.Duration("duration", time.Since(start)))
 
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrRecordNotFound
 	}
 
@@ -165,7 +208,6 @@ func (s BaseDA) Query(ctx context.Context, condition Conditions, values interfac
 
 func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions, values interface{}) error {
 	wheres, parameters := condition.GetConditions()
-	db = db.Clone()
 	if len(wheres) > 0 {
 		db.DB = db.Where(strings.Join(wheres, " and "), parameters...)
 	}
@@ -187,7 +229,7 @@ func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions
 	if err != nil {
 		log.Error(ctx, "query values failed",
 			log.Err(err),
-			log.String("tableName", db.NewScope(values).TableName()),
+			log.String("tableName", db.GetTableName(values)),
 			log.Any("condition", condition),
 			log.Any("pager", pager),
 			log.String("orderBy", orderBy),
@@ -196,7 +238,7 @@ func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions
 	}
 
 	log.Debug(ctx, "query values success",
-		log.String("tableName", db.NewScope(values).TableName()),
+		log.String("tableName", db.GetTableName(values)),
 		log.Any("condition", condition),
 		log.Any("pager", pager),
 		log.String("orderBy", orderBy),
@@ -216,30 +258,29 @@ func (s BaseDA) Count(ctx context.Context, condition Conditions, values interfac
 
 func (s BaseDA) CountTx(ctx context.Context, db *DBContext, condition Conditions, value interface{}) (int, error) {
 	wheres, parameters := condition.GetConditions()
-	db = db.Clone()
 	if len(wheres) > 0 {
 		db.DB = db.Where(strings.Join(wheres, " and "), parameters...)
 	}
 
 	start := time.Now()
-	var total int
-	tableName := db.NewScope(value).TableName()
+	var total int64
+	tableName := db.GetTableName(value)
 	err := db.Table(tableName).Count(&total).Error
 	if err != nil {
 		log.Error(ctx, "count failed",
 			log.Err(err),
-			log.String("tableName", db.NewScope(value).TableName()),
+			log.String("tableName", tableName),
 			log.Any("condition", condition),
 			log.Duration("duration", time.Since(start)))
 		return 0, err
 	}
 
 	log.Debug(ctx, "count success",
-		log.String("tableName", db.NewScope(value).TableName()),
+		log.String("tableName", tableName),
 		log.Any("condition", condition),
 		log.Duration("duration", time.Since(start)))
 
-	return total, nil
+	return int(total), nil
 }
 
 func (s BaseDA) Page(ctx context.Context, condition Conditions, values interface{}) (int, error) {
@@ -253,7 +294,6 @@ func (s BaseDA) Page(ctx context.Context, condition Conditions, values interface
 
 func (s BaseDA) PageTx(ctx context.Context, db *DBContext, condition Conditions, values interface{}) (int, error) {
 	total, err := s.CountTx(ctx, db, condition, values)
-	db = db.Clone()
 	if err != nil {
 		return 0, err
 	}

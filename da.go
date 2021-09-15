@@ -16,6 +16,8 @@ type DataAccesser interface {
 type Inserter interface {
 	Insert(context.Context, interface{}) (interface{}, error)
 	InsertTx(context.Context, *DBContext, interface{}) (interface{}, error)
+	InsertInBatches(context.Context, interface{}, int) (interface{}, error)
+	InsertInBatchesTx(context.Context, *DBContext, interface{}, int) (interface{}, error)
 }
 
 type Updater interface {

@@ -3,14 +3,14 @@ package dbo
 import (
 	// mysql driver
 	"context"
+	"gitlab.badanamu.com.cn/calmisland/common-log/log"
+	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"strings"
 	"sync"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
-	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 )
 
 const (
@@ -65,6 +65,7 @@ type Config struct {
 	ShowLog            bool
 	ShowSQL            bool
 	TransactionTimeout time.Duration
+	LogLevel           logger.LogLevel
 }
 
 func getDefaultConfig() (*Config, error) {
@@ -100,25 +101,28 @@ func New(options ...Option) (*DBO, error) {
 	for _, option := range options {
 		option(config)
 	}
-
-	db, err := gorm.Open("mysql", config.ConnectionString)
+	db, err := gorm.Open(mysql.Open(config.ConnectionString))
 	if err != nil {
 		log.Error(context.Background(), "init mysql connection failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
-
-	err = db.DB().Ping()
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Error(context.Background(), "get mysql DB failed", log.String("conn", config.ConnectionString))
+		return nil, err
+	}
+	err = sqlDB.Ping()
 	if err != nil {
 		log.Error(context.Background(), "ping mysql datebase failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
 	if config.MaxOpenConns > 0 {
-		db.DB().SetMaxOpenConns(config.MaxOpenConns)
+		sqlDB.SetMaxOpenConns(config.MaxOpenConns)
 	}
 
 	if config.MaxIdleConns > 0 {
-		db.DB().SetMaxIdleConns(config.MaxIdleConns)
+		sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	}
 
 	dbTransactionTimeout = config.TransactionTimeout
@@ -133,26 +137,30 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 		option(config)
 	}
 
-	db, err := gorm.Open("mysql", config.ConnectionString)
+	db, err := gorm.Open(mysql.Open(config.ConnectionString))
 	if err != nil {
 		log.Error(context.Background(), "init mysql connection failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
-	err = db.DB().Ping()
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Error(context.Background(), "get mysql DB failed", log.String("conn", config.ConnectionString))
+		return nil, err
+	}
+	err = sqlDB.Ping()
 	if err != nil {
 		log.Error(context.Background(), "ping mysql datebase failed", log.String("conn", config.ConnectionString))
 		return nil, err
 	}
 
 	if config.MaxOpenConns > 0 {
-		db.DB().SetMaxOpenConns(config.MaxOpenConns)
+		sqlDB.SetMaxOpenConns(config.MaxOpenConns)
 	}
 
 	if config.MaxIdleConns > 0 {
-		db.DB().SetMaxIdleConns(config.MaxIdleConns)
+		sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	}
-
 	return &DBO{db, config}, nil
 }
 
@@ -202,13 +210,18 @@ func WithTransactionTimeout(timeout time.Duration) Option {
 }
 
 func (s DBO) GetDB(ctx context.Context) *DBContext {
-	ctxDB := &DBContext{DB: s.db.New(), ctx: ctx}
+	ctxDB := &DBContext{DB: s.db.WithContext(ctx)}
 	if s.config.ShowSQL {
-		ctxDB.LogMode(true)
-		ctxDB.SetLogger(ctxDB)
-	} else {
-		ctxDB.LogMode(false)
+		newLogger := logger.New(
+			ctxDB,
+			logger.Config{
+				SlowThreshold:             time.Microsecond,
+				LogLevel:                  s.config.LogLevel,
+				IgnoreRecordNotFoundError: true,
+				Colorful:                  false,
+			},
+		)
+		ctxDB.Logger = newLogger
 	}
-
 	return ctxDB
 }

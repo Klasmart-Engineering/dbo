@@ -13,6 +13,15 @@ type Class struct {
 	Name string `gorm:"column:name;type:varchar(64);" json:"name"`
 }
 
+type School struct {
+	ID   uint   `gorm:"column:id;primaryKey;autoIncrement:true;autoIncrementIncrement:1"`
+	Name string `gorm:"column:school_name;type:varchar(64);" json:"school_name"`
+}
+
+func (School) TableName() string {
+	return "School"
+}
+
 func (Class) TableName() string {
 	return "class"
 }
@@ -21,6 +30,34 @@ type ClassConditions struct {
 	ID    int
 	Name  string
 	Pager Pager
+}
+
+type SchoolConditions struct {
+	ID    int
+	Name  string
+	Pager Pager
+}
+
+func (c *SchoolConditions) GetConditions() ([]string, []interface{}) {
+	var wheres []string
+	var params []interface{}
+	if c.ID > 0 {
+		wheres = append(wheres, "id= ?")
+		params = append(params, c.ID)
+	}
+	if len(c.Name) > 0 {
+		wheres = append(wheres, "school_name= ?")
+		params = append(params, c.Name)
+	}
+	return wheres, params
+}
+
+func (c *SchoolConditions) GetPager() *Pager {
+	return &c.Pager
+}
+
+func (c *SchoolConditions) GetOrderBy() string {
+	return ""
 }
 
 func (c *ClassConditions) GetConditions() ([]string, []interface{}) {
@@ -205,6 +242,34 @@ func TestTrans(t *testing.T) {
 		if errPage != nil {
 			return errPage
 		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func TestTransNewDB(t *testing.T) {
+	ctx := context.Background()
+	err := GetTrans(ctx, func(ctx context.Context, tx *DBContext) error {
+		db := MustGetDB(ctx)
+
+		var classes []Class
+		conditionClasses := ClassConditions{Name: "class30"}
+		errQuery := BaseDA{}.QueryTx(ctx, db, &conditionClasses, &classes)
+		fmt.Println(errQuery, classes)
+		if errQuery != nil {
+			return errQuery
+		}
+
+		var schools []School
+		conditionSchool := SchoolConditions{Name: "school30"}
+		errQuery1 := BaseDA{}.QueryTx(ctx, db, &conditionSchool, &schools)
+		fmt.Println(errQuery1, schools)
+		if errQuery != nil {
+			return errQuery
+		}
+
 		return nil
 	})
 	if err != nil {

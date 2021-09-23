@@ -3,13 +3,11 @@ package dbo
 import (
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gorm.io/gorm"
-	"time"
 )
 
 // DBContext db with context
 type DBContext struct {
 	*gorm.DB
-	time.Time
 }
 
 // Print print sql log
@@ -33,5 +31,9 @@ func (s *DBContext) GetTableName(value interface{}) string {
 		return ""
 	}
 	return stmt.Schema.Table
+}
 
+// Reset reset session conditions
+func (s *DBContext) Reset() {
+	s.DB = s.DB.Session(&gorm.Session{NewDB: true})
 }

@@ -32,6 +32,8 @@ func (s *DBContext) GetTableName(value interface{}) string {
 	}
 	return stmt.Schema.Table
 }
+
+// Reset reset session conditions
 func (s *DBContext) Reset() {
 	s.DB = s.DB.Session(&gorm.Session{NewDB: true})
 }

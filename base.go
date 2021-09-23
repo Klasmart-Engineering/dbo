@@ -300,7 +300,6 @@ func (s BaseDA) Page(ctx context.Context, condition Conditions, values interface
 }
 
 func (s BaseDA) PageTx(ctx context.Context, db *DBContext, condition Conditions, values interface{}) (int, error) {
-	db.Reset()
 	total, err := s.CountTx(ctx, db, condition, values)
 	if err != nil {
 		return 0, err

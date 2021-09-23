@@ -23,6 +23,7 @@ func (s BaseDA) Insert(ctx context.Context, value interface{}) (interface{}, err
 }
 
 func (s BaseDA) InsertTx(ctx context.Context, db *DBContext, value interface{}) (interface{}, error) {
+	db.Reset()
 	start := time.Now()
 	err := db.Create(value).Error
 	if err != nil {
@@ -64,6 +65,7 @@ func (s BaseDA) InsertInBatches(ctx context.Context, value interface{}, batchSiz
 
 //batchSize https://gorm.io/docs/create.html
 func (s BaseDA) InsertInBatchesTx(ctx context.Context, db *DBContext, value interface{}, batchSize int) (interface{}, error) {
+	db.Reset()
 	start := time.Now()
 	err := db.CreateInBatches(value, batchSize).Error
 	if err != nil {
@@ -103,6 +105,7 @@ func (s BaseDA) Update(ctx context.Context, value interface{}) (int64, error) {
 }
 
 func (s BaseDA) UpdateTx(ctx context.Context, db *DBContext, value interface{}) (int64, error) {
+	db.Reset()
 	start := time.Now()
 	newDB := db.Save(value)
 	if newDB.Error != nil {
@@ -143,6 +146,7 @@ func (s BaseDA) Save(ctx context.Context, value interface{}) error {
 }
 
 func (s BaseDA) SaveTx(ctx context.Context, db *DBContext, value interface{}) error {
+	db.Reset()
 	start := time.Now()
 	err := db.Save(value).Error
 	if err != nil {
@@ -172,6 +176,7 @@ func (s BaseDA) Get(ctx context.Context, id interface{}, value interface{}) erro
 }
 
 func (s BaseDA) GetTx(ctx context.Context, db *DBContext, id interface{}, value interface{}) error {
+	db.Reset()
 	start := time.Now()
 	err := db.Where("id=?", id).First(value).Error
 	if err == nil {
@@ -207,6 +212,7 @@ func (s BaseDA) Query(ctx context.Context, condition Conditions, values interfac
 }
 
 func (s BaseDA) QueryTx(ctx context.Context, db *DBContext, condition Conditions, values interface{}) error {
+	db.Reset()
 	wheres, parameters := condition.GetConditions()
 	if len(wheres) > 0 {
 		db.DB = db.Where(strings.Join(wheres, " and "), parameters...)
@@ -257,6 +263,7 @@ func (s BaseDA) Count(ctx context.Context, condition Conditions, values interfac
 }
 
 func (s BaseDA) CountTx(ctx context.Context, db *DBContext, condition Conditions, value interface{}) (int, error) {
+	db.Reset()
 	wheres, parameters := condition.GetConditions()
 	if len(wheres) > 0 {
 		db.DB = db.Where(strings.Join(wheres, " and "), parameters...)
@@ -293,6 +300,7 @@ func (s BaseDA) Page(ctx context.Context, condition Conditions, values interface
 }
 
 func (s BaseDA) PageTx(ctx context.Context, db *DBContext, condition Conditions, values interface{}) (int, error) {
+	db.Reset()
 	total, err := s.CountTx(ctx, db, condition, values)
 	if err != nil {
 		return 0, err

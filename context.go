@@ -33,5 +33,5 @@ func (s *DBContext) GetTableName(value interface{}) string {
 	return stmt.Schema.Table
 }
 func (s *DBContext) Reset() {
-	s.DB.Session(&gorm.Session{NewDB: true})
+	s.DB = s.DB.Session(&gorm.Session{NewDB: true})
 }

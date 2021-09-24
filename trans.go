@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
+
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
-	"time"
 )
 
 var (
@@ -15,6 +16,7 @@ var (
 )
 
 func getDBTransactionTimeout() time.Duration {
+
 	second := krconfig.CommonShareConfig().Db.Mysql.TransactionTimeoutSecond
 	if second > 0 {
 		return time.Duration(int64(time.Second) * int64(second))
@@ -26,7 +28,12 @@ func getDBTransactionTimeout() time.Duration {
 func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) error) error {
 	log.Debug(ctx, "begin transaction")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
+	dbo, err := GetGlobal()
+	if err != nil {
+		return err
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, dbo.config.TransactionTimeout)
 	defer cancel()
 
 	db, err := GetDB(ctxWithTimeout)
@@ -40,7 +47,7 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {
-				log.Error(ctxWithTimeout, "transaction panic", log.Any("recover error", err1))
+				log.Warn(ctxWithTimeout, "transaction panic", log.Any("recover error", err1))
 				funcDone <- fmt.Errorf("transaction panic: %+v", err1)
 			}
 		}()
@@ -55,26 +62,26 @@ func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) e
 	case <-ctxWithTimeout.Done():
 		// context deadline exceeded
 		err = ctxWithTimeout.Err()
-		log.Error(ctxWithTimeout, "transaction context deadline exceeded", log.Err(err))
+		log.Warn(ctxWithTimeout, "transaction context deadline exceeded", log.Err(err))
 	}
 
 	if err != nil {
 		err1 := db.Rollback().Error
 		if err1 != nil {
-			log.Error(ctxWithTimeout, "rollback transaction failed", log.String("outer error", err.Error()), log.Err(err1))
+			log.Warn(ctxWithTimeout, "rollback transaction failed", log.String("outer error", err.Error()), log.Err(err1))
 		} else {
-			log.Debug(ctxWithTimeout, "rollback transaction success")
+			log.Debug(ctxWithTimeout, "rollback transaction successfully")
 		}
 		return err
 	}
 
 	err = db.Commit().Error
 	if err != nil {
-		log.Error(ctxWithTimeout, "commit transaction failed", log.Err(err))
+		log.Warn(ctxWithTimeout, "commit transaction failed", log.Err(err))
 		return err
 	}
 
-	log.Debug(ctxWithTimeout, "commit transaction success")
+	log.Debug(ctxWithTimeout, "commit transaction successfully")
 
 	return nil
 }
@@ -88,7 +95,12 @@ type transactionResult struct {
 func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBContext) (interface{}, error)) (interface{}, error) {
 	log.Debug(ctx, "begin transaction")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, getDBTransactionTimeout())
+	dbo, err := GetGlobal()
+	if err != nil {
+		return nil, err
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, dbo.config.TransactionTimeout)
 	defer cancel()
 
 	db, err := GetDB(ctxWithTimeout)
@@ -102,7 +114,7 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	go func() {
 		defer func() {
 			if err1 := recover(); err1 != nil {
-				log.Error(ctxWithTimeout, "transaction panic", log.Any("recover error", err1))
+				log.Warn(ctxWithTimeout, "transaction panic", log.Any("recover error", err1))
 				funcDone <- &transactionResult{Error: fmt.Errorf("transaction panic: %+v", err1)}
 			}
 		}()
@@ -119,19 +131,19 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 	case <-ctxWithTimeout.Done():
 		// context deadline exceeded
 		funcResult = &transactionResult{Error: ctxWithTimeout.Err()}
-		log.Error(ctxWithTimeout, "transaction context deadline exceeded", log.Err(ctxWithTimeout.Err()))
+		log.Warn(ctxWithTimeout, "transaction context deadline exceeded", log.Err(ctxWithTimeout.Err()))
 	}
 
 	if funcResult.Error != nil {
-		log.Error(ctxWithTimeout, "transaction failed", log.Err(funcResult.Error))
+		log.Warn(ctxWithTimeout, "transaction failed", log.Err(funcResult.Error))
 
 		err1 := db.Rollback().Error
 		if err1 != nil {
-			log.Error(ctxWithTimeout, "rollback transaction failed",
+			log.Warn(ctxWithTimeout, "rollback transaction failed",
 				log.String("transaction error", funcResult.Error.Error()),
 				log.Err(err1))
 		} else {
-			log.Debug(ctxWithTimeout, "rollback transaction success", log.Err(funcResult.Error))
+			log.Debug(ctxWithTimeout, "rollback transaction successfully", log.Err(funcResult.Error))
 
 		}
 		return nil, funcResult.Error
@@ -139,11 +151,11 @@ func GetTransResult(ctx context.Context, fn func(ctx context.Context, tx *DBCont
 
 	err = db.Commit().Error
 	if err != nil {
-		log.Error(ctxWithTimeout, "commit transaction failed", log.Err(err))
+		log.Warn(ctxWithTimeout, "commit transaction failed", log.Err(err))
 		return nil, err
 	}
 
-	log.Debug(ctxWithTimeout, "commit transaction success")
+	log.Debug(ctxWithTimeout, "commit transaction successfully")
 
 	return funcResult.Result, nil
 }

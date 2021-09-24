@@ -3,9 +3,10 @@ package dbo
 import (
 	"context"
 	"fmt"
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
-	"gorm.io/gorm/logger"
+	"os"
 	"testing"
+
+	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 )
 
 type Class struct {
@@ -89,7 +90,7 @@ func initDB() {
 		c.MaxIdleConns = 10
 		c.MaxOpenConns = 10
 		c.ConnectionString = "root:123456@tcp(127.0.0.1:3306)/ai_facerecognition?charset=utf8mb4&parseTime=True&loc=Local"
-		c.LogLevel = logger.Info
+		c.LogLevel = Info
 	})
 	if err != nil {
 		log.Error(context.TODO(), "create dbo failed", log.Err(err))
@@ -99,10 +100,8 @@ func initDB() {
 }
 
 func TestMain(m *testing.M) {
-	fmt.Println("begin test")
 	initDB()
-	m.Run()
-	fmt.Println("end test")
+	os.Exit(m.Run())
 }
 
 func TestFind(t *testing.T) {

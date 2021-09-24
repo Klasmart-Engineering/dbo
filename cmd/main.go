@@ -15,7 +15,7 @@ func main() {
 	ctx := context.Background()
 
 	_dbo, err := dbo.NewWithConfig(func(c *dbo.Config) {
-		c.ConnectionString = "root:rr123321@tcp(127.0.0.1:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
+		c.ConnectionString = "root:123456@tcp(127.0.0.1:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
 	})
 	if err != nil {
 		log.Panic(ctx, "create dbo failed", log.Err(err))
@@ -30,6 +30,11 @@ func main() {
 		}
 
 		err = insert(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		err = query(ctx, tx)
 		if err != nil {
 			return err
 		}
@@ -67,6 +72,18 @@ func delete(ctx context.Context, tx *dbo.DBContext) error {
 		return err
 	}
 
+	return nil
+}
+
+func query(ctx context.Context, tx *dbo.DBContext) error {
+	items := []*TestTable{}
+	err := dbo.BaseDA{}.QueryRawSQLTx(ctx, tx, &items, "select 'aaa' id, name from test_table where id in (?) order by id desc", []string{"1", "2"})
+	if err != nil {
+		log.Error(ctx, "delete failed", log.Err(err))
+		return err
+	}
+
+	log.Info(ctx, "query success", log.Any("items", items))
 	return nil
 }
 

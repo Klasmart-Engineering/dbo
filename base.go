@@ -308,3 +308,32 @@ func (s BaseDA) PageTx(ctx context.Context, db *DBContext, condition Conditions,
 
 	return total, nil
 }
+
+func (s BaseDA) QueryRawSQL(ctx context.Context, values interface{}, sql string, parameters ...interface{}) error {
+	db, err := GetDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	return s.QueryRawSQLTx(ctx, db, values, sql, parameters...)
+}
+
+func (s BaseDA) QueryRawSQLTx(ctx context.Context, db *DBContext, values interface{}, sql string, parameters ...interface{}) error {
+	start := time.Now()
+	err := db.ResetCondition().Raw(sql, parameters...).Find(values).Error
+	if err != nil {
+		log.Warn(ctx, "query raw sql failed",
+			log.Err(err),
+			log.String("sql", sql),
+			log.Any("parameters", parameters),
+			log.Duration("duration", time.Since(start)))
+		return err
+	}
+
+	log.Debug(ctx, "query raw sql successfully",
+		log.String("sql", sql),
+		log.Any("parameters", parameters),
+		log.Duration("duration", time.Since(start)))
+
+	return nil
+}

@@ -42,6 +42,8 @@ type Querier interface {
 	CountTx(context.Context, *DBContext, Conditions, interface{}) (int, error)
 	Page(context.Context, Conditions, interface{}) (int, error)
 	PageTx(context.Context, *DBContext, Conditions, interface{}) (int, error)
+	QueryRawSQL(context.Context, interface{}, string, ...interface{}) error
+	QueryRawSQLTx(context.Context, *DBContext, interface{}, string, ...interface{}) error
 }
 
 type Conditions interface {

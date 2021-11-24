@@ -87,7 +87,7 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 	var err error
 	switch config.DBType {
 	case MySQL:
-		db, err = gorm.Open(mysql.Open(config.ConnectionString))
+		db, err = gorm.Open(mysql.Open(config.ConnectionString), &gorm.Config{QueryFields: true})
 	default:
 		log.Panic(ctx, "unsupported database type", log.String("databaseType", config.DBType.String()))
 	}
@@ -131,8 +131,9 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 
 func (s DBO) GetDB(ctx context.Context) *DBContext {
 	ctxDB := &DBContext{DB: s.db.Session(&gorm.Session{
-		Context: ctx,
-		NewDB:   true,
+		Context:     ctx,
+		NewDB:       true,
+		QueryFields: true,
 	})}
 
 	ctxDB.Logger = logger.New(ctxDB, logger.Config{

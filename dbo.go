@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/newrelic/go-agent/_integrations/nrmysql"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -87,7 +88,10 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 	var err error
 	switch config.DBType {
 	case MySQL:
-		db, err = gorm.Open(mysql.Open(config.ConnectionString), &gorm.Config{QueryFields: true})
+		db, err = gorm.Open(mysql.New(mysql.Config{
+			DriverName:                "nrmysql",
+			DSN:                       config.ConnectionString,
+		}), &gorm.Config{QueryFields: true})
 	default:
 		log.Panic(ctx, "unsupported database type", log.String("databaseType", config.DBType.String()))
 	}

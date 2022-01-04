@@ -6,6 +6,7 @@ require (
 	github.com/coreos/bbolt v1.3.3 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/newrelic/go-agent v3.15.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
 	gitlab.badanamu.com.cn/calmisland/common-log v0.1.4

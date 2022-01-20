@@ -87,10 +87,10 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 	var db *gorm.DB
 	var err error
 	switch config.DBType {
-	case MySQL:
+	case MySQL, NewRelicMySQL:
 		db, err = gorm.Open(mysql.New(mysql.Config{
-			DriverName:                "nrmysql",
-			DSN:                       config.ConnectionString,
+			DriverName: config.DBType.DriverName(),
+			DSN:        config.ConnectionString,
 		}), &gorm.Config{QueryFields: true})
 	default:
 		log.Panic(ctx, "unsupported database type", log.String("databaseType", config.DBType.String()))

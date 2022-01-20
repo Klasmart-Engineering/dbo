@@ -4,25 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
-	"gitlab.badanamu.com.cn/calmisland/krypton/krconfig"
 )
-
-var (
-	// dbTransactionTimeout transaction timeout
-	dbTransactionTimeout = time.Second * 3
-)
-
-func getDBTransactionTimeout() time.Duration {
-
-	second := krconfig.CommonShareConfig().Db.Mysql.TransactionTimeoutSecond
-	if second > 0 {
-		return time.Duration(int64(time.Second) * int64(second))
-	}
-	return dbTransactionTimeout
-}
 
 // GetTrans begin a transaction
 func GetTrans(ctx context.Context, fn func(ctx context.Context, tx *DBContext) error) error {

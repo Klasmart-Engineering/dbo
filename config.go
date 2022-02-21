@@ -10,6 +10,7 @@ type Config struct {
 	MaxOpenConns     int
 	MaxIdleConns     int
 	ConnMaxLifetime  time.Duration
+	ConnMaxIdleTime  time.Duration
 	// DEPRECATED: always show log, you can use LogLevel to control log output
 	ShowLog bool
 	// DEPRECATED: always show sql

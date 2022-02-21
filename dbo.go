@@ -134,6 +134,10 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 		sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
 	}
 
+	if config.ConnMaxIdleTime > 0 {
+		sqlDB.SetConnMaxIdleTime(config.ConnMaxIdleTime)
+	}
+
 	return &DBO{db, config}, nil
 }
 

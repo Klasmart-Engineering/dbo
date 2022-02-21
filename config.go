@@ -9,6 +9,7 @@ type Config struct {
 	ConnectionString string
 	MaxOpenConns     int
 	MaxIdleConns     int
+	ConnMaxLifetime  time.Duration
 	// DEPRECATED: always show log, you can use LogLevel to control log output
 	ShowLog bool
 	// DEPRECATED: always show sql
@@ -16,6 +17,7 @@ type Config struct {
 	DBType             DBType
 	TransactionTimeout time.Duration
 	LogLevel           LogLevel
+	SlowThreshold      time.Duration
 }
 
 func getDefaultConfig() *Config {

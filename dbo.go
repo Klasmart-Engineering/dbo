@@ -4,7 +4,6 @@ import (
 	// mysql driver
 	"context"
 	"sync"
-	"time"
 
 	_ "github.com/newrelic/go-agent/_integrations/nrmysql"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
@@ -130,6 +129,10 @@ func NewWithConfig(options ...Option) (*DBO, error) {
 		sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	}
 
+	if config.ConnMaxLifetime > 0 {
+		sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
+	}
+
 	return &DBO{db, config}, nil
 }
 
@@ -141,8 +144,8 @@ func (s DBO) GetDB(ctx context.Context) *DBContext {
 	})}
 
 	ctxDB.Logger = logger.New(ctxDB, logger.Config{
-		SlowThreshold:             time.Microsecond,
 		LogLevel:                  s.config.LogLevel.GormLogLevel(),
+		SlowThreshold:             s.config.SlowThreshold,
 		IgnoreRecordNotFoundError: false,
 		Colorful:                  false,
 	})

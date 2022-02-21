@@ -4,6 +4,7 @@ import (
 	// mysql driver
 	"context"
 	"sync"
+	"time"
 
 	_ "github.com/newrelic/go-agent/_integrations/nrmysql"
 	"gitlab.badanamu.com.cn/calmisland/common-log/log"
@@ -143,9 +144,14 @@ func (s DBO) GetDB(ctx context.Context) *DBContext {
 		QueryFields: true,
 	})}
 
+	slowThreshold := 200 * time.Millisecond
+	if s.config.SlowThreshold > 0 {
+		slowThreshold = s.config.SlowThreshold
+	}
+
 	ctxDB.Logger = logger.New(ctxDB, logger.Config{
 		LogLevel:                  s.config.LogLevel.GormLogLevel(),
-		SlowThreshold:             s.config.SlowThreshold,
+		SlowThreshold:             slowThreshold,
 		IgnoreRecordNotFoundError: false,
 		Colorful:                  false,
 	})

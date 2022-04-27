@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
-	"gitlab.badanamu.com.cn/calmisland/dbo"
+	"github.com/KL-Engineering/common-log/log"
+	"github.com/KL-Engineering/dbo"
 )
 
 const batch = 20

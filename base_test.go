@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
+	"github.com/KL-Engineering/common-log/log"
 )
 
 type Class struct {

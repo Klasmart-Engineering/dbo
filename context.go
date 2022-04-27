@@ -1,7 +1,7 @@
 package dbo
 
 import (
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
+	"github.com/KL-Engineering/common-log/log"
 	"gorm.io/gorm"
 )
 

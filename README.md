@@ -1,11 +1,11 @@
 # Database Operator
 
-Database Operator简称dbo，是方便操作数据库的helper
+Database Operator 简称 dbo，是方便操作数据库的 helper
 
 # 安装
 
 ```
-go get -u gitlab.badanamu.com.cn/calmisland/dbo
+go get -u github.com/KL-Engineering/dbo
 ```
 
 # 使用

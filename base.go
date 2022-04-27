@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KL-Engineering/common-log/log"
 	"github.com/go-sql-driver/mysql"
-	"gitlab.badanamu.com.cn/calmisland/common-log/log"
 	"gorm.io/gorm"
 )
 

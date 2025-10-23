@@ -3,7 +3,7 @@ module github.com/Klasmart-Engineering/dbo
 go 1.18
 
 require (
-	github.com/Klasmart-Engineering/common-log v0.3.0
+	github.com/Klasmart-Engineering/common-log v0.3.2
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.1
 	gorm.io/driver/mysql v1.2.3

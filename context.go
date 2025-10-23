@@ -1,7 +1,7 @@
 package dbo
 
 import (
-	"github.com/KL-Engineering/common-log/log"
+	"github.com/Klasmart-Engineering/common-log/log"
 	"gorm.io/gorm"
 )
 

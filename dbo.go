@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/KL-Engineering/common-log/log"
+	"github.com/Klasmart-Engineering/common-log/log"
 	_ "github.com/newrelic/go-agent/v3/integrations/nrmysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

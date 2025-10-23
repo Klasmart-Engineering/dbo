@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/KL-Engineering/common-log/log"
+	"github.com/Klasmart-Engineering/common-log/log"
 )
 
 // GetTrans begin a transaction
